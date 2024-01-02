@@ -7,12 +7,23 @@ use std::error::Error;
 use std::fs::File;
 use std::io::{self, BufRead, Write};
 use std::path::Path;
+use std::time::{SystemTime, UNIX_EPOCH};
+use std::{fs, thread, time::Duration};
 use winapi::um::winuser::{
     SystemParametersInfoA, SPIF_SENDCHANGE, SPIF_UPDATEINIFILE, SPI_SETDESKWALLPAPER,
 };
 
 const UNSPLASH_SEARCH_URL: &str = "https://api.unsplash.com/search/photos";
 const USE_EXISTING_IMAGE: bool = false;
+
+fn create_slideshow(image_directory: &str, interval: Duration) {
+    let paths = fs::read_dir(image_directory).unwrap();
+    for path in paths {
+        let image_path = path.unwrap().path();
+        set_wallpaper(image_path.to_str().unwrap());
+        thread::sleep(interval);
+    }
+}
 
 async fn fetch_unsplash_image_url(
     access_key: &str,
@@ -22,18 +33,21 @@ async fn fetch_unsplash_image_url(
 ) -> Result<String, Box<dyn Error>> {
     let mut url = UNSPLASH_SEARCH_URL.to_string();
 
-    // Append query parameters
-    if let Some(query) = query {
-        url.push_str("?query=");
-        url.push_str(query);
-    }
+    url.push_str("?query=");
+    url.push_str(query.unwrap_or("nature"));
+
     if let Some(collection) = collection {
-        url.push_str("&collections=");
-        url.push_str(collection);
+        if !collection.is_empty() {
+            url.push_str("&collections=");
+            url.push_str(collection);
+        }
     }
+
     if let Some(artist) = artist {
-        url.push_str("&username=");
-        url.push_str(artist);
+        if !artist.is_empty() {
+            url.push_str("&username=");
+            url.push_str(artist);
+        }
     }
 
     let header_value = HeaderValue::from_str(&format!("Client-ID {}", access_key))
@@ -56,7 +70,7 @@ async fn fetch_unsplash_image_url(
         .to_string())
 }
 
-async fn download_image(image_url: &str) -> Result<Vec<u8>, io::Error> {
+async fn download_image(image_url: &str, file_name: &str) -> Result<(), io::Error> {
     let response = reqwest::get(image_url)
         .await
         .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
@@ -66,17 +80,20 @@ async fn download_image(image_url: &str) -> Result<Vec<u8>, io::Error> {
         .get(reqwest::header::CONTENT_TYPE)
         .map_or(false, |v| v.to_str().unwrap_or("").starts_with("image/"))
     {
-        Ok(response
+        let image_data = response
             .bytes()
             .await
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?
-            .to_vec())
+            .to_vec();
+        File::create(file_name)?.write_all(&image_data)?;
     } else {
-        Err(io::Error::new(
+        return Err(io::Error::new(
             io::ErrorKind::Other,
             "Response is not an image",
-        ))
+        ));
     }
+
+    Ok(())
 }
 
 fn set_wallpaper(image_path: &str) {
@@ -107,54 +124,69 @@ async fn main() {
     let image_path = env::var("IMAGE_PATH").expect("IMAGE_PATH not found in .env file");
 
     let stdin = io::stdin();
-    println!("Enter search keyword (or press enter to skip):");
-    let keyword = stdin.lock().lines().next().unwrap().unwrap_or_default();
 
-    println!("Enter collection ID (or press enter to skip):");
-    let collection = stdin.lock().lines().next().unwrap().unwrap_or_default();
+    println!("Choose an option: \n1. Download new wallpaper\n2. Start slideshow");
+    let choice = stdin.lock().lines().next().unwrap().unwrap_or_default();
 
-    println!("Enter artist username (or press enter to skip):");
-    let artist = stdin.lock().lines().next().unwrap().unwrap_or_default();
+    match choice.as_str() {
+        "1" => {
+            let start = SystemTime::now();
+            let since_the_epoch = start
+                .duration_since(UNIX_EPOCH)
+                .expect("Time went backwards");
+            let unique_file_name =
+                format!("{}\\Wallrus-{}.jpg", image_path, since_the_epoch.as_secs());
 
-    // converts String to &str
-    let keyword_option = keyword.as_str().into();
-    let collection_option = collection.as_str().into();
-    let artist_option = artist.as_str().into();
+            println!("Enter search keyword (or press enter to skip):");
+            let keyword = stdin.lock().lines().next().unwrap().unwrap_or_default();
 
-    if !Path::new(&image_path).exists() || !USE_EXISTING_IMAGE {
-        match fetch_unsplash_image_url(
-            &unsplash_access_key,
-            keyword_option,
-            collection_option,
-            artist_option,
-        )
-        .await
-        {
-            Ok(image_url) => match download_image(&image_url).await {
-                Ok(image_data) => match File::create(image_path.clone()) {
-                    Ok(mut file) => {
-                        if let Err(e) = file.write_all(&image_data) {
-                            println!("Failed to write image data: {}", e);
-                            return;
-                        }
-                    }
-                    Err(e) => {
-                        println!("Failed to create file: {}", e);
-                        return;
-                    }
-                },
-                Err(e) => {
-                    println!("Error downloading image: {}", e);
-                    return;
+            println!("Enter collection ID (or press enter to skip):");
+            let collection = stdin.lock().lines().next().unwrap().unwrap_or_default();
+
+            println!("Enter artist username (or press enter to skip):");
+            let artist = stdin.lock().lines().next().unwrap().unwrap_or_default();
+
+            // converts String to &str
+            let keyword_option = if keyword.is_empty() {
+                None
+            } else {
+                Some(keyword.as_str())
+            };
+            let collection_option = if collection.is_empty() {
+                None
+            } else {
+                Some(collection.as_str())
+            };
+            let artist_option = if artist.is_empty() {
+                None
+            } else {
+                Some(artist.as_str())
+            };
+
+            if !Path::new(&unique_file_name).exists() || !USE_EXISTING_IMAGE {
+                match fetch_unsplash_image_url(
+                    &unsplash_access_key,
+                    keyword_option,
+                    collection_option,
+                    artist_option,
+                )
+                .await
+                {
+                    Ok(image_url) => match download_image(&image_url, &unique_file_name).await {
+                        Ok(_) => println!("Image downloaded and saved as {}", unique_file_name),
+                        Err(e) => println!("Error downloading image: {}", e),
+                    },
+                    Err(e) => println!("Error fetching image URL: {}", e),
                 }
-            },
-            Err(e) => {
-                println!("Error fetching image URL: {}", e);
-                return;
             }
-        }
-    }
 
-    set_wallpaper(&image_path);
-    println!("Wallpaper updated!");
+            set_wallpaper(&image_path);
+            println!("Wallpaper updated!");
+        }
+        "2" => {
+            let slideshow_interval = Duration::from_secs(5);
+            create_slideshow(&image_path, slideshow_interval);
+        }
+        _ => println!("Invalid option."),
+    }
 }
