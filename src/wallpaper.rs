@@ -27,7 +27,7 @@ pub fn generate_wallpaper(width: u32, height: u32, file_path: &str) {
 
     let wallpaper_type = match thread_rng().gen_range(0..3) {
         0 => WallpaperType::Gradient,
-        // 1 => WallpaperType::RandomPLot,
+        1 => WallpaperType::RandomPlot,
         _ => WallpaperType::RandomWalk,
     };
 
@@ -120,26 +120,57 @@ fn generate_random_walk_wallpaper(width: u32, height: u32, file_path: &Path) {
 
 fn generate_random_plot_wallpaper(width: u32, height: u32, file_path: &Path) {
     let root = BitMapBackend::new(file_path, (width, height)).into_drawing_area();
-    root.fill(&WHITE).unwrap();
+    let mut rng = thread_rng();
+
+    // Generate a base hue for the plot color
+    let base_hue = rng.gen_range(0..360);
+
+    // Create plot color using analogous color scheme
+    let plot_color = hsv_to_rgb(base_hue, 0.7, 0.8);
+
+    // Fill the background with a light pastel color
+    let background_color = hsv_to_rgb((base_hue + 30) % 360, 0.5, 1.0);
+    root.fill(&RGBColor(
+        background_color.0,
+        background_color.1,
+        background_color.2,
+    ))
+    .unwrap();
 
     let mut chart = ChartBuilder::on(&root)
-        .caption("Random Plot", ("sans-serif", 50).into_font())
         .build_cartesian_2d(0..width as i32, 0..height as i32)
         .unwrap();
 
-    chart.configure_mesh().draw().unwrap();
+    // Disable mesh and axes
+    chart
+        .configure_mesh()
+        .disable_mesh()
+        .disable_axes()
+        .draw()
+        .unwrap();
 
-    let mut rng = thread_rng();
+    // Draw random plots covering the entire width
     for _ in 0..1000 {
+        let data: Vec<(i32, i32)> = (0..100)
+            .map(|_| {
+                (
+                    rng.gen_range(0..width as i32),
+                    rng.gen_range(0..height as i32),
+                )
+            })
+            .collect();
         chart
             .draw_series(PointSeries::of_element(
-                (0..100).map(|x| (x, rng.gen_range(0..height as i32))),
+                data,
                 1,
-                &RED,
+                &RGBColor(plot_color.0, plot_color.1, plot_color.2),
                 &|coord, size, style| EmptyElement::at(coord) + Circle::new((0, 0), size, style),
             ))
             .unwrap();
     }
+
+    // Present the final drawing
+    root.present().expect("Unable to write result to file");
 
     println!("Random plot wallpaper generated at {:?}", file_path);
     set_wallpaper(file_path);
