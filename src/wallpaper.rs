@@ -42,19 +42,12 @@ fn generate_gradient_wallpaper(width: u32, height: u32, file_path: &Path) {
     let mut imgbuf: RgbaImage = ImageBuffer::new(width, height);
     let mut rng = thread_rng();
 
-    // Generate random start and end colors for the gradient
-    let start_color = (
-        rng.gen_range(0..=255),
-        rng.gen_range(0..=255),
-        rng.gen_range(0..=255),
-        255,
-    );
-    let end_color = (
-        rng.gen_range(0..=255),
-        rng.gen_range(0..=255),
-        rng.gen_range(0..=255),
-        255,
-    );
+    // Generate a base hue for the gradient
+    let base_hue = rng.gen_range(0..360);
+
+    // Create start and end colors using analogous color scheme
+    let start_color = hsv_to_rgb(base_hue, 0.7, 0.8);
+    let end_color = hsv_to_rgb((base_hue + 30) % 360, 0.7, 0.8); // 30 degrees apart
 
     for (x, _y, pixel) in imgbuf.enumerate_pixels_mut() {
         let r = start_color.0 as f32
@@ -76,13 +69,20 @@ fn generate_random_walk_wallpaper(width: u32, height: u32, file_path: &Path) {
     let mut rng = thread_rng();
 
     // Generate a single random pastel background color
-    let background_r = rng.gen_range(200..=255);
-    let background_g = rng.gen_range(200..=255);
-    let background_b = rng.gen_range(200..=255);
+    let base_hue = rng.gen_range(0..360);
+
+    // Create background and line colors using analogous color scheme
+    let background_color = hsv_to_rgb(base_hue, 0.5, 1.0);
+    let line_color = hsv_to_rgb((base_hue + 30) % 360, 0.7, 0.8);
 
     // Apply the background color uniformly
     for pixel in imgbuf.pixels_mut() {
-        *pixel = Rgba([background_r, background_g, background_b, 255]);
+        *pixel = Rgba([
+            background_color.0,
+            background_color.1,
+            background_color.2,
+            255,
+        ]);
     }
 
     let (mut x, mut y) = (width / 2, height / 2);
@@ -104,7 +104,11 @@ fn generate_random_walk_wallpaper(width: u32, height: u32, file_path: &Path) {
                 let yj = ((y as i32 + j - line_thickness / 2)
                     .max(0)
                     .min(height as i32 - 1)) as u32;
-                imgbuf.put_pixel(xi, yj, Rgba([0, 0, 0, 255])); // Color of the random walk line
+                imgbuf.put_pixel(
+                    xi,
+                    yj,
+                    Rgba([line_color.0, line_color.1, line_color.2, 255]),
+                );
             }
         }
     }
@@ -139,6 +143,30 @@ fn generate_random_plot_wallpaper(width: u32, height: u32, file_path: &Path) {
 
     println!("Random plot wallpaper generated at {:?}", file_path);
     set_wallpaper(file_path);
+}
+
+fn hsv_to_rgb(hue: i32, saturation: f32, value: f32) -> (u8, u8, u8) {
+    let c = value * saturation;
+    let x = c * (1.0 - (((hue as f32 / 60.0) % 2.0) - 1.0).abs());
+    let m = value - c;
+    let (r_prime, g_prime, b_prime) = if hue >= 0 && hue < 60 {
+        (c, x, 0.0)
+    } else if hue >= 60 && hue < 120 {
+        (x, c, 0.0)
+    } else if hue >= 120 && hue < 180 {
+        (0.0, c, x)
+    } else if hue >= 180 && hue < 240 {
+        (0.0, x, c)
+    } else if hue >= 240 && hue < 300 {
+        (x, 0.0, c)
+    } else {
+        (c, 0.0, x)
+    };
+    (
+        ((r_prime + m) * 255.0).round() as u8,
+        ((g_prime + m) * 255.0).round() as u8,
+        ((b_prime + m) * 255.0).round() as u8,
+    )
 }
 
 /// Sets the given image as the desktop wallpaper.
