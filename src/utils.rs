@@ -1,22 +1,15 @@
 // utils.rs
 
+use chrono::prelude::Utc;
 use std::path::Path;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Generates a unique filename based on the current timestamp.
 /// This is useful for saving files that should not overwrite each other.
 pub fn generate_unique_filename(base_path: &str, extension: &str) -> String {
-    let start = SystemTime::now();
-    let since_the_epoch = start
-        .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards");
+    let now = Utc::now();
+    let date_str = now.format("%Y%m%d%H%M%S").to_string();
 
-    format!(
-        "{}Wallrus-{}.{}",
-        base_path,
-        since_the_epoch.as_secs(),
-        extension
-    )
+    format!("{}Wallrus-{}.{}", base_path, date_str, extension)
 }
 
 /// Converts an `Option<String>` to an `Option<&str>`.
