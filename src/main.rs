@@ -12,9 +12,35 @@ use std::{fs, thread, time::Duration};
 use winapi::um::winuser::{
     SystemParametersInfoA, SPIF_SENDCHANGE, SPIF_UPDATEINIFILE, SPI_SETDESKWALLPAPER,
 };
+extern crate image;
+
+use image::{ImageBuffer, Rgba};
 
 const UNSPLASH_SEARCH_URL: &str = "https://api.unsplash.com/search/photos";
 const USE_EXISTING_IMAGE: bool = false;
+
+fn generate_wallpaper(
+    width: u32,
+    height: u32,
+    start_color: (u8, u8, u8, u8),
+    end_color: (u8, u8, u8, u8),
+    file_path: &Path,
+) {
+    let (start_r, start_g, start_b, start_a) = start_color;
+    let (end_r, end_g, end_b, end_a) = end_color;
+
+    let mut imgbuf = ImageBuffer::new(width, height);
+
+    for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
+        let r = start_r as f32 + (end_r as f32 - start_r as f32) * (x as f32 / width as f32);
+        let g = start_g as f32 + (end_g as f32 - start_g as f32) * (x as f32 / width as f32);
+        let b = start_b as f32 + (end_b as f32 - start_b as f32) * (x as f32 / width as f32);
+        let a = start_a as f32 + (end_a as f32 - start_a as f32) * (x as f32 / width as f32);
+        *pixel = Rgba([r as u8, g as u8, b as u8, a as u8]);
+    }
+
+    imgbuf.save(file_path).unwrap();
+}
 
 fn create_slideshow(image_directory: &str, interval: Duration) {
     let paths = fs::read_dir(image_directory).unwrap();
@@ -125,7 +151,7 @@ async fn main() {
 
     let stdin = io::stdin();
 
-    println!("Choose an option: \n1. Download new wallpaper\n2. Start slideshow");
+    println!("Choose an option: \n1. Download new wallpaper\n2. Start slideshow\n3. Generate one");
     let choice = stdin.lock().lines().next().unwrap().unwrap_or_default();
 
     match choice.as_str() {
@@ -135,7 +161,7 @@ async fn main() {
                 .duration_since(UNIX_EPOCH)
                 .expect("Time went backwards");
             let unique_file_name =
-                format!("{}\\Wallrus-{}.jpg", image_path, since_the_epoch.as_secs());
+                format!("{}Wallrus-{}.jpg", image_path, since_the_epoch.as_secs());
 
             println!("Enter search keyword (or press enter to skip):");
             let keyword = stdin.lock().lines().next().unwrap().unwrap_or_default();
@@ -180,12 +206,17 @@ async fn main() {
                 }
             }
 
-            set_wallpaper(&image_path);
+            set_wallpaper(&unique_file_name);
             println!("Wallpaper updated!");
         }
         "2" => {
             let slideshow_interval = Duration::from_secs(5);
             create_slideshow(&image_path, slideshow_interval);
+        }
+        "3" => {
+            let file_path = Path::new(&image_path).join("wallrus.jpg");
+            generate_wallpaper(1920, 1080, (255, 0, 0, 255), (0, 0, 255, 255), &file_path);
+            println!("Wallpaper generated at {:?}", file_path);
         }
         _ => println!("Invalid option."),
     }
