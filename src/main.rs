@@ -66,13 +66,7 @@ async fn main() {
             wallpaper::create_slideshow(&image_path, Duration::from_secs(5));
         }
         "3" => {
-            wallpaper::generate_wallpaper(
-                1920,
-                1080,
-                (255, 0, 0, 255),
-                (0, 0, 255, 255),
-                &image_path,
-            );
+            wallpaper::generate_wallpaper(1920, 1080, &image_path);
         }
         _ => println!("Invalid option."),
     }
