@@ -94,11 +94,12 @@ pub async fn download_and_set_wallpaper(
     image_path: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Fetch the image URL from Unsplash
+    println!("Fetching image URL from Unsplash... ");
     let image_url = fetch_unsplash_image_url(access_key, query, collection, artist).await?;
 
     // Define the path where the image will be saved
     let file_name = generate_unique_filename(&image_path, "jpg");
-    print!("Downloading image to {}... ", &file_name);
+    println!("Downloading image to {}... ", &file_name);
     // Download the image
     download_image(&image_url, &file_name).await?;
 

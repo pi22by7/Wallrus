@@ -38,6 +38,9 @@ pub fn generate_wallpaper(
     }
 
     imgbuf.save(file_path).unwrap();
+    println!("Wallpaper generated at {:?}", file_path);
+
+    set_wallpaper(file_path);
 }
 
 /// Creates a slideshow from images in a specified directory, changing wallpaper at a given interval.

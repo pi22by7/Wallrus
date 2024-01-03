@@ -7,7 +7,6 @@ mod wallpaper;
 
 use std::env;
 use std::io::{self, BufRead};
-use std::path::Path;
 use std::time::Duration;
 
 #[tokio::main]
@@ -67,7 +66,6 @@ async fn main() {
             wallpaper::create_slideshow(&image_path, Duration::from_secs(5));
         }
         "3" => {
-            let file_path = Path::new(&image_path);
             wallpaper::generate_wallpaper(
                 1920,
                 1080,
@@ -75,7 +73,6 @@ async fn main() {
                 (0, 0, 255, 255),
                 &image_path,
             );
-            println!("Wallpaper generated at {:?}", file_path);
         }
         _ => println!("Invalid option."),
     }
