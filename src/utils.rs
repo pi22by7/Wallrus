@@ -13,6 +13,7 @@ pub fn generate_unique_filename(base_path: &str, extension: &str) -> String {
 }
 
 /// Converts an `Option<String>` to an `Option<&str>`.
+#[allow(dead_code)]
 pub fn str_option_to_slice(option: &Option<String>) -> Option<&str> {
     option.as_deref()
 }

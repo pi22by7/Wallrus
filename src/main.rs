@@ -1,73 +1,53 @@
-// main.rs
-
+mod cli;
 mod config;
+mod errors;
 mod unsplash;
 mod utils;
 mod wallpaper;
 
-use std::env;
-use std::io::{self, BufRead};
+use clap::Parser;
 use std::time::Duration;
 
+use crate::cli::{Cli, Commands};
+use crate::config::Config;
+use crate::errors::Result;
+
 #[tokio::main]
-async fn main() {
-    config::load_config();
+async fn main() -> Result<()> {
+    // Load environment variables
+    dotenv::dotenv().ok();
 
-    let unsplash_access_key =
-        env::var("UNSPLASH_ACCESS_KEY").expect("UNSPLASH_ACCESS_KEY not found in .env file");
-    let image_path = env::var("IMAGE_PATH").expect("IMAGE_PATH not found in .env file");
+    // Parse command line arguments
+    let cli = Cli::parse();
 
-    let stdin = io::stdin();
-    println!("Choose an option: \n1. Download new wallpaper\n2. Start slideshow\n3. Generate one");
-    let choice = stdin.lock().lines().next().unwrap().unwrap_or_default();
+    // Load and validate configuration
+    let config = Config::load()?;
 
-    match choice.as_str() {
-        "1" => {
-            let stdin = io::stdin();
-            println!("Enter search keyword (or press enter to skip):");
-            let keyword = stdin.lock().lines().next().unwrap().unwrap_or_default();
-
-            println!("Enter collection ID (or press enter to skip):");
-            let collection = stdin.lock().lines().next().unwrap().unwrap_or_default();
-
-            println!("Enter artist username (or press enter to skip):");
-            let artist = stdin.lock().lines().next().unwrap().unwrap_or_default();
-
-            // Wrap the strings in Option and pass a reference to these options
-            let keyword_option = if keyword.is_empty() {
-                None
-            } else {
-                Some(keyword)
-            };
-            let collection_option = if collection.is_empty() {
-                None
-            } else {
-                Some(collection)
-            };
-            let artist_option = if artist.is_empty() {
-                None
-            } else {
-                Some(artist)
-            };
-
-            if let Err(e) = unsplash::download_and_set_wallpaper(
-                &unsplash_access_key,
-                utils::str_option_to_slice(&keyword_option),
-                utils::str_option_to_slice(&collection_option),
-                utils::str_option_to_slice(&artist_option),
-                &image_path,
+    match cli.command {
+        Commands::Download {
+            keyword,
+            collection,
+            artist,
+        } => {
+            println!("Downloading wallpaper...");
+            unsplash::download_and_set_wallpaper(
+                &config.unsplash_access_key,
+                keyword.as_deref(),
+                collection.as_deref(),
+                artist.as_deref(),
+                &config.image_path,
             )
-            .await
-            {
-                println!("Error: {}", e);
-            }
+            .await?;
         }
-        "2" => {
-            wallpaper::create_slideshow(&image_path, Duration::from_secs(5));
+        Commands::Slideshow { interval } => {
+            println!("Starting slideshow...");
+            wallpaper::create_slideshow(&config.image_path, Duration::from_secs(interval))?;
         }
-        "3" => {
-            wallpaper::generate_wallpaper(1920, 1080, &image_path);
+        Commands::Generate { width, height } => {
+            println!("Generating wallpaper...");
+            wallpaper::generate_wallpaper(width, height, &config.image_path)?;
         }
-        _ => println!("Invalid option."),
     }
+
+    Ok(())
 }

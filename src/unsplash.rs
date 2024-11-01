@@ -1,12 +1,10 @@
-// unsplash.rs
-
-use reqwest;
+use crate::errors::{Result, WallrusError};
+use futures_util::StreamExt;
+use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use serde_json::Value;
-use std::error::Error;
-use std::fs::File;
-use std::io::{self, Write};
 use std::path::Path;
+use tokio::io::AsyncWriteExt;
 
 use crate::utils::{generate_unique_filename, is_valid_file};
 use crate::wallpaper::set_wallpaper;
@@ -19,7 +17,7 @@ pub async fn fetch_unsplash_image_url(
     query: Option<&str>,
     collection: Option<&str>,
     artist: Option<&str>,
-) -> Result<String, Box<dyn Error>> {
+) -> Result<String> {
     let mut url = UNSPLASH_SEARCH_URL.to_string();
 
     url.push_str("?query=");
@@ -40,7 +38,7 @@ pub async fn fetch_unsplash_image_url(
     }
 
     let header_value = HeaderValue::from_str(&format!("Client-ID {}", access_key))
-        .map_err(|e| Box::new(e) as Box<dyn Error>)?;
+        .map_err(|e| WallrusError::Config(e.to_string()))?;
     let mut headers = HeaderMap::new();
     headers.insert(AUTHORIZATION, header_value);
 
@@ -49,40 +47,49 @@ pub async fn fetch_unsplash_image_url(
         .get(&url)
         .headers(headers)
         .send()
-        .await?
+        .await
+        .map_err(|e| WallrusError::Network(e))?
         .json::<Value>()
-        .await?;
+        .await
+        .map_err(|e| WallrusError::Network(e))?;
 
     Ok(res["results"][0]["urls"]["full"]
         .as_str()
-        .unwrap_or_default()
+        .ok_or_else(|| WallrusError::Config("No image URL found".to_string()))?
         .to_string())
 }
 
 /// Downloads the image from the given URL and saves it to the specified file path.
-pub async fn download_image(image_url: &str, file_path: &str) -> Result<(), io::Error> {
+pub async fn download_image(image_url: &str, file_path: &str) -> Result<()> {
     let response = reqwest::get(image_url)
         .await
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+        .map_err(|e| WallrusError::Network(e))?;
+    let total_size = response.content_length().unwrap_or(0);
 
-    if response
-        .headers()
-        .get(reqwest::header::CONTENT_TYPE)
-        .map_or(false, |v| v.to_str().unwrap_or("").starts_with("image/"))
-    {
-        let image_data = response
-            .bytes()
+    let pb = ProgressBar::new(total_size);
+    pb.set_style(
+        ProgressStyle::default_bar()
+            .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})")
+            .unwrap()
+            .progress_chars("#>-"),
+    );
+
+    let mut file = tokio::fs::File::create(file_path)
+        .await
+        .map_err(|e| WallrusError::Io(e))?;
+    let mut downloaded: u64 = 0;
+    let mut stream = response.bytes_stream();
+
+    while let Some(chunk) = stream.next().await {
+        let chunk = chunk.map_err(|e| WallrusError::Network(e))?;
+        file.write_all(&chunk)
             .await
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?
-            .to_vec();
-        File::create(file_path)?.write_all(&image_data)?;
-    } else {
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            "Response is not an image",
-        ));
+            .map_err(|e| WallrusError::Io(e))?;
+        downloaded = std::cmp::min(downloaded + (chunk.len() as u64), total_size);
+        pb.set_position(downloaded);
     }
 
+    pb.finish_with_message("Download complete");
     Ok(())
 }
 
@@ -92,27 +99,22 @@ pub async fn download_and_set_wallpaper(
     collection: Option<&str>,
     artist: Option<&str>,
     image_path: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
-    // Fetch the image URL from Unsplash
+) -> Result<()> {
     println!("Fetching image URL from Unsplash... ");
     let image_url = fetch_unsplash_image_url(access_key, query, collection, artist).await?;
 
-    // Define the path where the image will be saved
-    let file_name = generate_unique_filename(&image_path, "jpg");
+    let file_name = generate_unique_filename(image_path, "jpg");
     println!("Downloading image to {}... ", &file_name);
-    // Download the image
     download_image(&image_url, &file_name).await?;
 
     if !is_valid_file(&file_name) {
-        return Err(Box::new(io::Error::new(
-            io::ErrorKind::Other,
-            "Downloaded file is not valid",
-        )));
+        return Err(WallrusError::ImageProcessing(
+            "Downloaded file is not valid".to_string(),
+        ));
     }
 
-    // Set the image as wallpaper (using a function from wallpaper.rs)
     let path = Path::new(&file_name);
-    set_wallpaper(path);
+    set_wallpaper(path)?;
 
     Ok(())
 }
