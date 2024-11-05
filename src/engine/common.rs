@@ -96,6 +96,7 @@ pub fn hsv_to_rgb(hue: i32, saturation: f32, value: f32) -> (u8, u8, u8) {
     )
 }
 
+#[derive(Debug)]
 pub enum WallpaperType {
     Gradient,
     RandomWalk,
@@ -112,7 +113,7 @@ pub fn generate_wallpaper(width: u32, height: u32, file_path: &str) -> Result<()
         1 => WallpaperType::RandomPlot,
         _ => WallpaperType::RandomWalk,
     };
-
+    println!("Generating: {:?}", wallpaper_type);
     match wallpaper_type {
         WallpaperType::Gradient => generate_gradient_wallpaper(width, height, file_path)?,
         WallpaperType::RandomWalk => generate_random_walk_wallpaper(width, height, file_path)?,
