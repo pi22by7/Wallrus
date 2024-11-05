@@ -6,8 +6,8 @@ use serde_json::Value;
 use std::path::Path;
 use tokio::io::AsyncWriteExt;
 
+use crate::engine::set_wallpaper;
 use crate::utils::{generate_unique_filename, is_valid_file};
-use crate::wallpaper::set_wallpaper;
 
 const UNSPLASH_SEARCH_URL: &str = "https://api.unsplash.com/search/photos";
 

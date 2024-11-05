@@ -1,9 +1,9 @@
 mod cli;
 mod config;
+mod engine;
 mod errors;
 mod unsplash;
 mod utils;
-mod wallpaper;
 
 use clap::Parser;
 use std::time::Duration;
@@ -41,11 +41,11 @@ async fn main() -> Result<()> {
         }
         Commands::Slideshow { interval } => {
             println!("Starting slideshow...");
-            wallpaper::create_slideshow(&config.image_path, Duration::from_secs(interval))?;
+            engine::create_slideshow(&config.image_path, Duration::from_secs(interval))?;
         }
         Commands::Generate { width, height } => {
             println!("Generating wallpaper...");
-            wallpaper::generate_wallpaper(width, height, &config.image_path)?;
+            engine::generate_wallpaper(width, height, &config.image_path)?;
         }
     }
 
