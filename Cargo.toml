@@ -22,3 +22,6 @@ clap = {version = "4.5", features = ["derive"]}
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["winuser"] }
+
+[dev-dependencies]
+tempfile = "3.13"

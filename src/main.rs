@@ -2,15 +2,13 @@ mod cli;
 mod config;
 mod engine;
 mod errors;
-mod unsplash;
+mod providers;
 mod utils;
 
-use clap::Parser;
-use std::time::Duration;
-
-use crate::cli::{Cli, Commands};
-use crate::config::Config;
+use crate::cli::Cli;
 use crate::errors::Result;
+use config::config::Config;
+use std::time::Duration;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -18,19 +16,19 @@ async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
     // Parse command line arguments
-    let cli = Cli::parse();
+    let cli = Cli::parse_args();
 
     // Load and validate configuration
     let config = Config::load()?;
 
     match cli.command {
-        Commands::Download {
+        cli::Commands::Download {
             keyword,
             collection,
             artist,
         } => {
             println!("Downloading wallpaper...");
-            unsplash::download_and_set_wallpaper(
+            providers::unsplash::download_and_set_wallpaper(
                 &config.unsplash_access_key,
                 keyword.as_deref(),
                 collection.as_deref(),
@@ -39,11 +37,11 @@ async fn main() -> Result<()> {
             )
             .await?;
         }
-        Commands::Slideshow { interval } => {
+        cli::Commands::Slideshow { interval } => {
             println!("Starting slideshow...");
             engine::create_slideshow(&config.image_path, Duration::from_secs(interval))?;
         }
-        Commands::Generate { width, height } => {
+        cli::Commands::Generate { width, height } => {
             println!("Generating wallpaper...");
             engine::generate_wallpaper(width, height, &config.image_path)?;
         }

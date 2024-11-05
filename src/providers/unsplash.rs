@@ -104,7 +104,7 @@ pub async fn download_and_set_wallpaper(
     let image_url = fetch_unsplash_image_url(access_key, query, collection, artist).await?;
 
     let file_name = generate_unique_filename(image_path, "jpg");
-    println!("Downloading image to {}... ", &file_name);
+    println!("Downloading image to {}", &file_name);
     download_image(&image_url, &file_name).await?;
 
     if !is_valid_file(&file_name) {

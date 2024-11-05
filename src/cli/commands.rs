@@ -1,11 +1,4 @@
-use clap::{Parser, Subcommand};
-
-#[derive(Parser)]
-#[command(author, version, about, long_about = None)]
-pub struct Cli {
-    #[command(subcommand)]
-    pub command: Commands,
-}
+use clap::Subcommand;
 
 #[derive(Subcommand)]
 pub enum Commands {
