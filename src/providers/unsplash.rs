@@ -48,10 +48,10 @@ pub async fn fetch_unsplash_image_url(
         .headers(headers)
         .send()
         .await
-        .map_err(|e| WallrusError::Network(e))?
+        .map_err(WallrusError::Network)?
         .json::<Value>()
         .await
-        .map_err(|e| WallrusError::Network(e))?;
+        .map_err(WallrusError::Network)?;
 
     Ok(res["results"][0]["urls"]["full"]
         .as_str()
@@ -63,7 +63,7 @@ pub async fn fetch_unsplash_image_url(
 pub async fn download_image(image_url: &str, file_path: &str) -> Result<()> {
     let response = reqwest::get(image_url)
         .await
-        .map_err(|e| WallrusError::Network(e))?;
+        .map_err(WallrusError::Network)?;
     let total_size = response.content_length().unwrap_or(0);
 
     let pb = ProgressBar::new(total_size);
@@ -76,15 +76,15 @@ pub async fn download_image(image_url: &str, file_path: &str) -> Result<()> {
 
     let mut file = tokio::fs::File::create(file_path)
         .await
-        .map_err(|e| WallrusError::Io(e))?;
+        .map_err(WallrusError::Io)?;
     let mut downloaded: u64 = 0;
     let mut stream = response.bytes_stream();
 
     while let Some(chunk) = stream.next().await {
-        let chunk = chunk.map_err(|e| WallrusError::Network(e))?;
+        let chunk = chunk.map_err(WallrusError::Network)?;
         file.write_all(&chunk)
             .await
-            .map_err(|e| WallrusError::Io(e))?;
+            .map_err(WallrusError::Io)?;
         downloaded = std::cmp::min(downloaded + (chunk.len() as u64), total_size);
         pb.set_position(downloaded);
     }

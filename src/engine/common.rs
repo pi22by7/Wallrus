@@ -14,12 +14,16 @@ use super::generators::{
 
 #[derive(Debug, Clone)]
 pub struct WallpaperConfig {
+    #[allow(dead_code)]
     pub width: u32,
+    #[allow(dead_code)]
     pub height: u32,
     pub line_thickness: u32,
     pub step_size: u32,
     pub num_steps: u32,
+    #[allow(dead_code)]
     pub saturation: f32,
+    #[allow(dead_code)]
     pub value: f32,
 }
 
@@ -76,15 +80,15 @@ pub fn hsv_to_rgb(hue: i32, saturation: f32, value: f32) -> (u8, u8, u8) {
     let c = value * saturation;
     let x = c * (1.0 - (((hue as f32 / 60.0) % 2.0) - 1.0).abs());
     let m = value - c;
-    let (r_prime, g_prime, b_prime) = if hue >= 0 && hue < 60 {
+    let (r_prime, g_prime, b_prime) = if (0..60).contains(&hue) {
         (c, x, 0.0)
-    } else if hue >= 60 && hue < 120 {
+    } else if (60..120).contains(&hue) {
         (x, c, 0.0)
-    } else if hue >= 120 && hue < 180 {
+    } else if (120..180).contains(&hue) {
         (0.0, c, x)
-    } else if hue >= 180 && hue < 240 {
+    } else if (180..240).contains(&hue) {
         (0.0, x, c)
-    } else if hue >= 240 && hue < 300 {
+    } else if (240..300).contains(&hue) {
         (x, 0.0, c)
     } else {
         (c, 0.0, x)
@@ -125,7 +129,7 @@ pub fn generate_wallpaper(width: u32, height: u32, file_path: &str) -> Result<()
 
 /// Creates a slideshow from images in a specified directory, changing wallpaper at a given interval.
 pub fn create_slideshow(image_directory: &str, interval: Duration) -> Result<()> {
-    let paths = fs::read_dir(image_directory).map_err(|e| WallrusError::Io(e))?;
+    let paths = fs::read_dir(image_directory).map_err(WallrusError::Io)?;
 
     let valid_paths: Vec<_> = paths
         .filter_map(|entry| {

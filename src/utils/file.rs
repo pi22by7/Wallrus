@@ -7,6 +7,13 @@ pub fn generate_unique_filename(base_path: &str, extension: &str) -> String {
     let now = Utc::now();
     let date_str = now.format("%Y%m%d%H%M%S").to_string();
 
+    // Ensure base_path ends with a directory separator
+    let base_path = if base_path.ends_with('/') {
+        base_path.to_string()
+    } else {
+        format!("{}/", base_path)
+    };
+
     format!("{}Wallrus-{}.{}", base_path, date_str, extension)
 }
 

@@ -57,8 +57,8 @@ impl RandomWalker {
         // Calculate distance from center for opacity
         let center_x = width as f32 / 2.0;
         let center_y = height as f32 / 2.0;
-        let max_distance = ((center_x.powi(2) + center_y.powi(2)) as f32).sqrt();
-        let distance = (((self.x - center_x).powi(2) + (self.y - center_y).powi(2)) as f32).sqrt();
+        let max_distance = (center_x.powi(2) + center_y.powi(2)).sqrt();
+        let distance = ((self.x - center_x).powi(2) + (self.y - center_y).powi(2)).sqrt();
         let opacity = ((1.0 - distance / max_distance) * 255.0) as u8;
 
         // Create gradient effect based on position
@@ -138,7 +138,7 @@ pub fn generate_random_walk_wallpaper(width: u32, height: u32, file_path: &Path)
         .map(|i| {
             let x = (i % width) as f32;
             let y = (i / width) as f32;
-            let gradient = (x / width as f32 * 0.5 + y / height as f32 * 0.5) as f32;
+            let gradient = x / width as f32 * 0.5 + y / height as f32 * 0.5;
             Rgba([
                 (background_color.0 as f32 * (1.0 - gradient)) as u8,
                 (background_color.1 as f32 * (1.0 - gradient)) as u8,
