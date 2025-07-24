@@ -1,0 +1,34 @@
+# Maintainer: Your Name <your.email@example.com>
+pkgname=wallrus
+pkgver=0.2.0
+pkgrel=1
+pkgdesc="A fast, cross-platform wallpaper management tool with Hyprland support"
+arch=('x86_64' 'aarch64')
+url="https://github.com/yourusername/wallrus"
+license=('MIT')
+depends=()
+optdepends=(
+    'hyprpaper: Preferred wallpaper utility for Hyprland'
+    'swww: Animated wallpaper support for Hyprland'
+    'swaybg: Basic wallpaper support for Hyprland'
+)
+makedepends=('rust' 'cargo')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
+sha256sums=('SKIP')  # Replace with actual checksum
+
+build() {
+    cd "$pkgname-$pkgver"
+    cargo build --release --locked
+}
+
+check() {
+    cd "$pkgname-$pkgver"
+    cargo test --release --locked
+}
+
+package() {
+    cd "$pkgname-$pkgver"
+    install -Dm755 "target/release/$pkgname" "$pkgdir/usr/bin/$pkgname"
+    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+}

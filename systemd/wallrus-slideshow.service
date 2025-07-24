@@ -1,0 +1,16 @@
+[Unit]
+Description=Wallrus Wallpaper Slideshow
+After=graphical-session.target
+Wants=graphical-session.target
+
+[Service]
+Type=simple
+User=%i
+Environment=DISPLAY=:0
+EnvironmentFile=-/home/%i/.config/wallrus/env
+ExecStart=/usr/local/bin/wallrus slideshow /home/%i/Pictures/Wallpapers --interval 300
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target

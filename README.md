@@ -1,30 +1,53 @@
 # Wallrus 🦭
 
-A fast, cross-platform wallpaper management tool written in Rust. Wallrus lets you download wallpapers from Unsplash, create procedural wallpapers, and manage wallpaper slideshows across different desktop environments and window managers.
+A fast, cross-platform wallpaper management tool written in Rust. Download wallpapers from Unsplash, generate procedural wallpapers, and run automated slideshows across Linux, macOS, and Windows.
 
 ## Features
-
-✨ **Multi-Platform Support**
-- Linux (GNOME, KDE, XFCE, Hyprland)
-- macOS
-- Windows
 
 🎨 **Multiple Wallpaper Sources**
 - Download from Unsplash API with keyword/artist/collection filters
 - Generate procedural wallpapers (gradients, random walks, scatter plots)
-- Slideshow from local image directories
+- Automated slideshow from local image directories
 
-🪟 **Hyprland Integration**
-- Native support for hyprpaper via `hyprctl` commands
-- Fallback to swww for animated wallpapers
-- Basic swaybg support for simple static wallpapers
+✨ **Cross-Platform Support**
+- **Linux**: GNOME, KDE, XFCE, Hyprland, and other desktop environments
+- **macOS**: Native system integration
+- **Windows**: Native system integration
+
+⚡ **Fast & Lightweight**
+- Written in Rust for performance and reliability
+- Minimal resource usage
+- Single binary with no external dependencies
 
 ## Installation
 
-### Prerequisites
+### Quick Install (Linux/macOS)
 
-- Rust 1.70+ 
-- For Unsplash downloads: [Unsplash API access key](https://unsplash.com/developers)
+```bash
+curl -sSf https://raw.githubusercontent.com/yourusername/wallrus/main/install.sh | sh
+```
+
+### Package Managers
+
+#### Cargo (Rust)
+```bash
+cargo install wallrus
+```
+
+#### Arch Linux (AUR)
+```bash
+yay -S wallrus
+# or
+paru -S wallrus
+```
+
+#### Homebrew (macOS)
+```bash
+brew install wallrus
+```
+
+#### From GitHub Releases
+Download pre-built binaries from [Releases](https://github.com/yourusername/wallrus/releases).
 
 ### Build from Source
 
@@ -35,6 +58,10 @@ cargo build --release
 ```
 
 The binary will be available at `target/release/wallrus`.
+
+### Prerequisites
+
+- For Unsplash downloads: [Unsplash API access key](https://unsplash.com/developers)
 
 ## Configuration
 

@@ -2,6 +2,14 @@
 name = "wallrus"
 version = "0.2.0"
 edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+license = "MIT"
+description = "Download, generate, and manage wallpapers across desktop environments"
+homepage = "https://github.com/yourusername/wallrus"
+repository = "https://github.com/yourusername/wallrus"
+readme = "README.md"
+keywords = ["wallpaper", "hyprland", "desktop", "wayland", "cli"]
+categories = ["command-line-utilities", "multimedia::images"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
