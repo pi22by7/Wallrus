@@ -1,7 +1,7 @@
 class Wallrus < Formula
-  desc "A fast, cross-platform wallpaper management tool with Hyprland support"
-  homepage "https://github.com/yourusername/wallrus"
-  url "https://github.com/yourusername/wallrus/archive/v0.2.0.tar.gz"
+  desc "Cross-platform wallpaper manager with native Wayland protocol support and multi-DE compatibility"
+  homepage "https://github.com/pi22by7/wallrus"
+  url "https://github.com/pi22by7/wallrus/archive/v0.3.0.tar.gz"
   sha256 "REPLACE_WITH_ACTUAL_SHA256"
   license "MIT"
 

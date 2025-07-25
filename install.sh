@@ -4,7 +4,7 @@ set -e
 # Wallrus Installation Script
 # Supports Linux and macOS
 
-REPO="yourusername/wallrus"
+REPO="pi22by7/wallrus"
 BINARY_NAME="wallrus"
 INSTALL_DIR="/usr/local/bin"
 
@@ -127,7 +127,7 @@ main() {
     echo "2. Set wallpaper directory: export IMAGE_PATH=/path/to/wallpapers"
     echo "3. Try: wallrus download --keyword nature"
     echo
-    echo "For Hyprland users, ensure you have one of: hyprpaper, swww, or swaybg installed"
+    echo "For Hyprland users: Native Wayland protocol support included (no external tools required!)"
 }
 
 main "$@"

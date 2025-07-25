@@ -1,6 +1,6 @@
 # Wallrus 🦭
 
-A fast, cross-platform wallpaper management tool written in Rust. Download wallpapers from Unsplash, generate procedural wallpapers, and run automated slideshows across Linux, macOS, and Windows.
+A fast, cross-platform wallpaper management tool with **native Wayland protocol support**. Download wallpapers from Unsplash, generate procedural wallpapers, and run automated slideshows across Linux, macOS, and Windows.
 
 ## Features
 
@@ -8,6 +8,12 @@ A fast, cross-platform wallpaper management tool written in Rust. Download wallp
 - Download from Unsplash API with keyword/artist/collection filters
 - Generate procedural wallpapers (gradients, random walks, scatter plots)
 - Automated slideshow from local image directories
+
+🖥️ **Native Wayland Protocol Support**
+- **Standalone wallpaper setting** - No external dependencies required
+- **Direct wlr-layer-shell integration** using smithay-client-toolkit
+- **Multi-monitor support** with per-output surface management
+- **Smart fallback system** to external tools when needed
 
 ✨ **Cross-Platform Support**
 - **Linux**: GNOME, KDE, XFCE, Hyprland, and other desktop environments
@@ -17,14 +23,14 @@ A fast, cross-platform wallpaper management tool written in Rust. Download wallp
 ⚡ **Fast & Lightweight**
 - Written in Rust for performance and reliability
 - Minimal resource usage
-- Single binary with no external dependencies
+- Native protocol implementation eliminates external tool dependencies
 
 ## Installation
 
 ### Quick Install (Linux/macOS)
 
 ```bash
-curl -sSf https://raw.githubusercontent.com/yourusername/wallrus/main/install.sh | sh
+curl -sSf https://raw.githubusercontent.com/pi22by7/wallrus/main/install.sh | sh
 ```
 
 ### Package Managers
@@ -47,17 +53,23 @@ brew install wallrus
 ```
 
 #### From GitHub Releases
-Download pre-built binaries from [Releases](https://github.com/yourusername/wallrus/releases).
+Download pre-built binaries from [Releases](https://github.com/pi22by7/wallrus/releases).
 
 ### Build from Source
 
 ```bash
-git clone https://github.com/yourusername/wallrus.git
+git clone https://github.com/pi22by7/wallrus.git
 cd wallrus
-cargo build --release
+# Build with native Wayland support (default)
+cargo build --release --features wayland
 ```
 
 The binary will be available at `target/release/wallrus`.
+
+#### Build Options
+
+- **Default (Wayland enabled)**: `cargo build --release`
+- **Wayland disabled**: `cargo build --release --no-default-features`
 
 ### Prerequisites
 
@@ -77,15 +89,16 @@ UNSPLASH_ACCESS_KEY=your_unsplash_access_key_here
 IMAGE_PATH=/path/to/wallpaper/directory
 ```
 
-### Hyprland Setup
+### Wayland/Hyprland Setup
 
-Wallrus automatically detects Hyprland and tries wallpaper utilities in this order:
+Wallrus has **native Wayland protocol support** and automatically detects Hyprland. It tries methods in this order:
 
-1. **hyprpaper** (preferred) - `hyprctl hyprpaper wallpaper`
-2. **swww** (fallback) - `swww img`
-3. **swaybg** (basic) - `swaybg -i`
+1. 🚀 **Native wlr-layer-shell protocol** (preferred) - Built-in, no dependencies
+2. **hyprpaper** (fallback) - `hyprctl hyprpaper wallpaper`
+3. **swww** (fallback) - `swww img`
+4. **swaybg** (fallback) - `swaybg -i`
 
-Make sure at least one of these utilities is installed:
+**No external tools required!** But you can optionally install fallbacks:
 
 ```bash
 # Arch Linux
@@ -93,6 +106,12 @@ sudo pacman -S hyprpaper swww swaybg
 
 # Or install manually from their respective repositories
 ```
+
+#### Important Notes
+
+- **Native mode**: Process stays alive to maintain wallpaper (layer surfaces require active client)
+- **Daemon conflicts**: Stop `swww-daemon` before using native mode: `pkill swww-daemon`
+- **Process management**: Use Ctrl+C to exit and remove wallpaper when using native mode
 
 ## Usage
 
@@ -136,12 +155,21 @@ wallrus slideshow /path/to/images --interval 30
 
 | Environment | Status | Method |
 |-------------|--------|---------|
+| **Hyprland** | ✅ | **Native wlr-layer-shell protocol** |
+| Other Wayland | ✅ | **Native wlr-layer-shell protocol** |
 | GNOME/Unity | ✅ | `gsettings` |
 | KDE Plasma | ✅ | `qdbus` |
 | XFCE | ✅ | `xfconf-query` |
-| Hyprland | ✅ | `hyprctl`/`swww`/`swaybg` |
 | macOS | ✅ | Native APIs |
 | Windows | ✅ | Native APIs |
+
+### Wayland Protocol Features
+
+- **🎯 Direct protocol integration** - No external dependencies
+- **🖥️ Multi-monitor support** - Automatic output detection
+- **⚡ High performance** - Direct buffer management
+- **🔄 Smart fallbacks** - External tools when needed
+- **🎨 Full image scaling** - Proper aspect ratio handling
 
 ## Contributing
 

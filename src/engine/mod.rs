@@ -7,6 +7,8 @@ mod linux;
 mod macos;
 #[cfg(target_os = "windows")]
 mod windows;
+#[cfg(all(unix, feature = "wayland"))]
+pub mod wayland;
 
 pub use common::*;
 #[cfg(target_os = "linux")]

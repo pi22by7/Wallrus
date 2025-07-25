@@ -1,12 +1,12 @@
 [package]
 name = "wallrus"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["pi22by7 <talk@pi22by7.me>"]
 license = "MIT"
-description = "Download, generate, and manage wallpapers across desktop environments"
-homepage = "https://github.com/yourusername/wallrus"
-repository = "https://github.com/yourusername/wallrus"
+description = "Cross-platform wallpaper manager with native Wayland protocol support and multi-DE compatibility"
+homepage = "https://github.com/pi22by7/wallrus"
+repository = "https://github.com/pi22by7/wallrus"
 readme = "README.md"
 keywords = ["wallpaper", "hyprland", "desktop", "wayland", "cli"]
 categories = ["command-line-utilities", "multimedia::images"]
@@ -30,6 +30,18 @@ clap = {version = "4.5", features = ["derive"]}
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["winuser"] }
+
+[target.'cfg(unix)'.dependencies]
+smithay-client-toolkit = { version = "0.19", optional = true }
+wayland-client = { version = "0.31", optional = true }
+wayland-protocols-wlr = { version = "0.3", optional = true }
+memmap2 = { version = "0.9", optional = true }
+tempfile = { version = "3.0", optional = true }
+
+[features]
+default = ["wayland"]
+wayland = ["smithay-client-toolkit", "wayland-client", "wayland-protocols-wlr", "memmap2", "tempfile"]
+
 
 [dev-dependencies]
 tempfile = "3.13"

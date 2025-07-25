@@ -1,16 +1,16 @@
-# Maintainer: Your Name <your.email@example.com>
+# Maintainer: pi22by7 <pi@pi22by7.me>
 pkgname=wallrus
-pkgver=0.2.0
+pkgver=0.3.0
 pkgrel=1
-pkgdesc="A fast, cross-platform wallpaper management tool with Hyprland support"
+pkgdesc="Cross-platform wallpaper manager with native Wayland protocol support and multi-DE compatibility"
 arch=('x86_64' 'aarch64')
-url="https://github.com/yourusername/wallrus"
+url="https://github.com/pi22by7/wallrus"
 license=('MIT')
 depends=()
 optdepends=(
-    'hyprpaper: Preferred wallpaper utility for Hyprland'
-    'swww: Animated wallpaper support for Hyprland'
-    'swaybg: Basic wallpaper support for Hyprland'
+    'hyprpaper: Fallback wallpaper utility for Hyprland (native protocol preferred)'
+    'swww: Fallback animated wallpaper support for Hyprland'
+    'swaybg: Fallback basic wallpaper support for Hyprland'
 )
 makedepends=('rust' 'cargo')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
@@ -18,7 +18,7 @@ sha256sums=('SKIP')  # Replace with actual checksum
 
 build() {
     cd "$pkgname-$pkgver"
-    cargo build --release --locked
+    cargo build --release --locked --features wayland
 }
 
 check() {
